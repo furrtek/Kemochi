@@ -7,6 +7,15 @@
 //l = length
 //k = checksum (start=0xAA)
 
+//Page 00: 7 icons
+//Page 01: 3 icons
+//Page 02: Alphabet 0
+//Page 03: Alphabet 1
+//Page 04: Alphabet 2
+//Page 05: Alphabet 3
+
+//Page 08: 
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -43,20 +52,20 @@ void txlcd(uint8_t b) {
 	uint8_t c;
 
 	PORTA &= ~_BV(PA2);
-	_delay_us(5);
+	_delay_us(2);
 	for (c=0;c<8;c++) {
 		if ((b<<c)&0x80)
 			PORTA |= _BV(PA5);
 		else
 			PORTA &= ~_BV(PA5);
-		_delay_us(5);
+		_delay_us(2);
 		PORTA |= _BV(PA4);
-		_delay_us(5);
+		_delay_us(2);
 		PORTA &= ~_BV(PA4);
 	}
-	_delay_us(5);
+	_delay_us(2);
 	PORTA |= _BV(PA2);
-	_delay_us(5);
+	_delay_us(2);
 }
 
 void clrlcd() {
@@ -104,6 +113,7 @@ ISR(INT0_vect) {
 							txlcd(0x40);
 							txlcd(0x80);
 							PORTA = 0b11001000;*/
+
 							i2c_start();
 							i2c_write(0xA0);
 							i2c_write(buf[3]);
@@ -177,21 +187,21 @@ void i2c_io_set_scl(uint8_t hi) {
 
 void i2c_start() {
   	i2c_io_set_scl(1);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_sda(0);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_scl(0);
-	_delay_us(20);
+	_delay_us(10);
 }
 
 void i2c_stop() {
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_scl(0);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_sda(0);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_scl(1);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_sda(1);
 }
 
@@ -203,35 +213,34 @@ uint8_t i2c_write(uint8_t byte) {
 			i2c_io_set_sda(1);
 		else
 			i2c_io_set_sda(0);
-		_delay_us(3);
+		_delay_us(2);
   		i2c_io_set_scl(1);
-		_delay_us(3);
+		_delay_us(2);
   		i2c_io_set_scl(0);
 	}
 	i2c_io_set_sda(1);
-	_delay_us(10);
+	_delay_us(5);
 
   	i2c_io_set_scl(1);
-	_delay_us(5);
+	_delay_us(2);
 	ack = (PINA & SDA)>>SDA;
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_scl(0);
-	_delay_us(5);
+	_delay_us(2);
 	return ack;
 }
 
 uint8_t i2c_read() {
-	uint8_t byte = 0x00,c, bit;
+	uint8_t byte = 0x00, bit;
 	for (bit=0;bit<8;bit++) {
   		i2c_io_set_sda(1);
     	i2c_io_set_scl(0);
-		_delay_us(5);
+		_delay_us(2);
     	i2c_io_set_scl(1);
-		_delay_us(30);
-    	c = PINA & _BV(SDA);
+		_delay_us(2);
 		byte <<= 1;
-    	if (c) byte |= 1;
-		_delay_us(30);
+    	if (PINA & _BV(SDA)) byte |= 1;
+		_delay_us(1);
     	i2c_io_set_scl(0);
 	}
 	return byte;
@@ -239,26 +248,26 @@ uint8_t i2c_read() {
 
 void i2c_readack() {
    	i2c_io_set_scl(0);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_sda(0);
-	_delay_us(5);
+	_delay_us(2);
    	i2c_io_set_scl(1);
-	_delay_us(5);
+	_delay_us(2);
    	i2c_io_set_scl(0);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_sda(1);
-	_delay_us(5);
+	_delay_us(2);
 }
 
 void i2c_noreadack() {
    	i2c_io_set_scl(0);
-	_delay_us(5);
+	_delay_us(2);
   	i2c_io_set_sda(1);
-	_delay_us(5);
+	_delay_us(2);
    	i2c_io_set_scl(1);
-	_delay_us(5);
+	_delay_us(2);
    	i2c_io_set_scl(0);
-	_delay_us(10);
+	_delay_us(5);
 }
 
 uint8_t exee_read_byte(uint16_t addr) {
@@ -267,12 +276,32 @@ uint8_t exee_read_byte(uint16_t addr) {
 	i2c_write(0xA0);
 	i2c_write(addr>>8);
 	i2c_write(addr & 0xFF);
-	_delay_ms(1);
 	i2c_start();
 	i2c_write(0xA1);
 	v = i2c_read();
 	i2c_noreadack();
 	return v;
+}
+
+uint8_t eebuf[64];
+
+void exee_read_buf(uint16_t addr) {
+	uint8_t c;
+
+	addr *= 64;
+	i2c_start();
+	i2c_write(0xA0);
+	i2c_write(addr>>8);
+	i2c_write(addr & 0xFF);
+	i2c_start();
+	i2c_write(0xA1);
+	for (c=0;c<64;c++) {
+		eebuf[c] = i2c_read();
+		if (c == 63)
+			i2c_noreadack();
+		else
+			i2c_readack();
+	}
 }
 
 void lcdtxt(char *txt) {
@@ -291,10 +320,26 @@ void lcdtxt(char *txt) {
 				cv = (cv-0x30)*5;
 			}
 			for (tc=0;tc<5;tc++)
-				txlcd(exee_read_byte(cv+tc));
+				txlcd(exee_read_byte(128+cv+tc));
 		}
 		txlcd(0);
 		txt++;
+	}
+}
+
+void lcdxy(uint8_t x, uint8_t y) {
+	PORTA &= ~0b00001000;
+	txlcd(0x80+x);
+	txlcd(0x40+y);
+	PORTA |= 0b00001000;
+}
+
+void drawlcd(uint8_t x, uint8_t y, uint8_t s, uint8_t e) {
+	uint8_t b;
+
+	lcdxy(x,y);
+	for (b=s;b<e;b++) {
+		txlcd(eebuf[b]);
 	}
 }
 
@@ -335,18 +380,23 @@ int main(void) {
 	ADCSRB = 0b00010000;
 	DIDR0 = 0b00000001;
 
-	PORTA &= ~0b00001000;
-	txlcd(0x40);
-	txlcd(0x80);
-	PORTA |= 0b00001000;
+	// Draw icons
+	exee_read_buf(0);
+	drawlcd(0+7,0,0,9);
+	drawlcd(15+7,0,9,18);
+	drawlcd(30+7,0,18,27);
+	drawlcd(45+7,0,27,36);
+	drawlcd(60+7,0,36,45);
+	drawlcd(0+7,5,45,54);
+	drawlcd(15+7,5,54,63);
+	exee_read_buf(1);
+	drawlcd(30+7,5,0,9);
+	drawlcd(45+7,5,9,18);
+	drawlcd(60+7,5,18,27);
 
-	for (c=0;c<20;c++) {
-		for (b=0;b<26;b++) {
-			if ((c*26)+b <= 504) txlcd(exee_read_byte((c*64)+b));
-		}
-	}
 
-	//lcdtxt("0123456789");
+	lcdxy(20,3);
+	lcdtxt("0123456789");
 
 	sei();
 

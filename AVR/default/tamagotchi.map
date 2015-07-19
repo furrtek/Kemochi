@@ -13,6 +13,7 @@ Allocating common symbols
 Common symbol       size              file
 
 fatimer             0x1               tamagotchi.o
+eebuf               0x40              tamagotchi.o
 rs                  0x1               tamagotchi.o
 state               0x1               tamagotchi.o
 buf                 0x20              tamagotchi.o
@@ -129,7 +130,7 @@ LOAD d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000      0x63c
+.text           0x00000000      0x6ea
  *(.vectors)
  .vectors       0x00000000       0x22 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr25/crttn44.o
                 0x00000000                __vectors
@@ -200,39 +201,42 @@ LOAD d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a
                 0x00000058                __vector_14
                 0x00000058                __vector_10
                 0x00000058                __vector_16
- .text          0x0000005a      0x5ba tamagotchi.o
+ .text          0x0000005a      0x668 tamagotchi.o
                 0x0000006c                txlcd
-                0x00000418                exee_read_byte
+                0x00000410                exee_read_byte
                 0x000001da                __vector_1
-                0x000003f0                i2c_noreadack
+                0x000003e8                i2c_noreadack
                 0x00000164                i2c_write
-                0x00000448                lcdtxt
+                0x0000048a                lcdtxt
+                0x00000518                drawlcd
                 0x0000011a                i2c_start
                 0x0000005a                get_adc
                 0x0000013a                i2c_stop
-                0x000004bc                main
+                0x0000053c                main
                 0x0000037e                i2c_read
                 0x00000100                i2c_io_set_sda
                 0x0000010e                i2c_io_set_scl
                 0x000000da                __vector_8
                 0x000000c2                clrlcd
-                0x000003be                i2c_readack
- .text          0x00000614        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
- .text          0x00000614        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
- .text          0x00000614        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
- .text          0x00000614        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
-                0x00000614                . = ALIGN (0x2)
+                0x00000502                lcdxy
+                0x00000438                exee_read_buf
+                0x000003b6                i2c_readack
+ .text          0x000006c2        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
+ .text          0x000006c2        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
+ .text          0x000006c2        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
+ .text          0x000006c2        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
+                0x000006c2                . = ALIGN (0x2)
  *(.text.*)
- .text.libgcc   0x00000614       0x24 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
-                0x00000614                __mulhi3
- .text.libgcc   0x00000638        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
- .text.libgcc   0x00000638        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
- .text.libgcc   0x00000638        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
-                0x00000638                . = ALIGN (0x2)
+ .text.libgcc   0x000006c2       0x24 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
+                0x000006c2                __mulhi3
+ .text.libgcc   0x000006e6        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
+ .text.libgcc   0x000006e6        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
+ .text.libgcc   0x000006e6        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
+                0x000006e6                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00000638        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
-                0x00000638                exit
-                0x00000638                _exit
+ .fini9         0x000006e6        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
+                0x000006e6                exit
+                0x000006e6                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -251,56 +255,58 @@ LOAD d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00000638        0x4 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
+ .fini0         0x000006e6        0x4 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
  *(.fini0)
-                0x0000063c                _etext = .
+                0x000006ea                _etext = .
 
-.data           0x00800060       0x1a load address 0x0000063c
+.data           0x00800060       0x26 load address 0x000006ea
                 0x00800060                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800060        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr25/crttn44.o
- .data          0x00800060       0x1a tamagotchi.o
- .data          0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
- .data          0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
- .data          0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
- .data          0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
+ .data          0x00800060       0x25 tamagotchi.o
+ .data          0x00800085        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
+ .data          0x00800085        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
+ .data          0x00800085        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
+ .data          0x00800085        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
  *(.data*)
  *(.rodata)
  *(.rodata*)
  *(.gnu.linkonce.d*)
-                0x0080007a                . = ALIGN (0x2)
-                0x0080007a                _edata = .
-                0x0080007a                PROVIDE (__data_end, .)
+                0x00800086                . = ALIGN (0x2)
+ *fill*         0x00800085        0x1 00
+                0x00800086                _edata = .
+                0x00800086                PROVIDE (__data_end, .)
 
-.bss            0x0080007a       0x26
-                0x0080007a                PROVIDE (__bss_start, .)
+.bss            0x00800086       0x66
+                0x00800086                PROVIDE (__bss_start, .)
  *(.bss)
- .bss           0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr25/crttn44.o
- .bss           0x0080007a        0x0 tamagotchi.o
- .bss           0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
- .bss           0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
- .bss           0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
- .bss           0x0080007a        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
+ .bss           0x00800086        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr25/crttn44.o
+ .bss           0x00800086        0x0 tamagotchi.o
+ .bss           0x00800086        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_mulhi3.o)
+ .bss           0x00800086        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_exit.o)
+ .bss           0x00800086        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_copy_data.o)
+ .bss           0x00800086        0x0 d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a(_clear_bss.o)
  *(.bss*)
  *(COMMON)
- COMMON         0x0080007a       0x26 tamagotchi.o
-                0x0080007a                fatimer
-                0x0080007b                rs
-                0x0080007c                state
-                0x0080007d                buf
-                0x0080009d                rbit
-                0x0080009e                first
-                0x0080009f                bufidx
-                0x008000a0                PROVIDE (__bss_end, .)
-                0x0000063c                __data_load_start = LOADADDR (.data)
-                0x00000656                __data_load_end = (__data_load_start + SIZEOF (.data))
+ COMMON         0x00800086       0x66 tamagotchi.o
+                0x00800086                fatimer
+                0x00800087                eebuf
+                0x008000c7                rs
+                0x008000c8                state
+                0x008000c9                buf
+                0x008000e9                rbit
+                0x008000ea                first
+                0x008000eb                bufidx
+                0x008000ec                PROVIDE (__bss_end, .)
+                0x000006ea                __data_load_start = LOADADDR (.data)
+                0x00000710                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x008000a0        0x0
-                0x008000a0                PROVIDE (__noinit_start, .)
+.noinit         0x008000ec        0x0
+                0x008000ec                PROVIDE (__noinit_start, .)
  *(.noinit*)
-                0x008000a0                PROVIDE (__noinit_end, .)
-                0x008000a0                _end = .
-                0x008000a0                PROVIDE (__heap_start, .)
+                0x008000ec                PROVIDE (__noinit_end, .)
+                0x008000ec                _end = .
+                0x008000ec                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000        0x0
  *(.eeprom*)
@@ -357,41 +363,41 @@ LOAD d:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr25\libgcc.a
                 0x00000000       0x20 tamagotchi.o
 
 .debug_pubnames
-                0x00000000      0x139
+                0x00000000      0x16b
  *(.debug_pubnames)
  .debug_pubnames
-                0x00000000      0x139 tamagotchi.o
+                0x00000000      0x16b tamagotchi.o
 
-.debug_info     0x00000000      0xdb8
+.debug_info     0x00000000      0xe78
  *(.debug_info)
- .debug_info    0x00000000      0xdb8 tamagotchi.o
+ .debug_info    0x00000000      0xe78 tamagotchi.o
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev   0x00000000      0x2ca
+.debug_abbrev   0x00000000      0x2f0
  *(.debug_abbrev)
- .debug_abbrev  0x00000000      0x2ca tamagotchi.o
+ .debug_abbrev  0x00000000      0x2f0 tamagotchi.o
 
-.debug_line     0x00000000      0x9c7
+.debug_line     0x00000000      0xab1
  *(.debug_line)
- .debug_line    0x00000000      0x9c7 tamagotchi.o
+ .debug_line    0x00000000      0xab1 tamagotchi.o
 
-.debug_frame    0x00000000      0x110
+.debug_frame    0x00000000      0x140
  *(.debug_frame)
- .debug_frame   0x00000000      0x110 tamagotchi.o
+ .debug_frame   0x00000000      0x140 tamagotchi.o
 
-.debug_str      0x00000000      0x1b5
+.debug_str      0x00000000      0x1d7
  *(.debug_str)
- .debug_str     0x00000000      0x1b5 tamagotchi.o
-                                0x1f3 (size before relaxing)
+ .debug_str     0x00000000      0x1d7 tamagotchi.o
+                                0x215 (size before relaxing)
 
-.debug_loc      0x00000000      0x4ee
+.debug_loc      0x00000000      0x5e5
  *(.debug_loc)
- .debug_loc     0x00000000      0x4ee tamagotchi.o
+ .debug_loc     0x00000000      0x5e5 tamagotchi.o
 
 .debug_macinfo
  *(.debug_macinfo)
 OUTPUT(tamagotchi.elf elf32-avr)
 LOAD linker stubs
 
-.debug_ranges   0x00000000      0x120
- .debug_ranges  0x00000000      0x120 tamagotchi.o
+.debug_ranges   0x00000000       0xd8
+ .debug_ranges  0x00000000       0xd8 tamagotchi.o
