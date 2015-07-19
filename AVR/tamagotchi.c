@@ -14,7 +14,32 @@
 //Page 04: Alphabet 2
 //Page 05: Alphabet 3
 
-//Page 08: 
+//Page 08: Player info A
+//	00: Name (12)		NAME:
+//  0C: Specie (12)		IS A:
+//  18: Country (12)	FROM:
+//  24: Spoken A (14)	SPEAKS:
+//  32: Spoken B (14)
+
+//Page 09: Player info B
+//  00: Spoken C (14)
+//  0E: Likes A (12)	LIKES:
+//  1A: Likes B (12)
+//  26: Likes C (12)
+//	32: Year of birth (4)
+
+//Page 0A: Player status
+//	00: Hunger
+//	01: Sleepyness
+//	02: Boredom
+//	03: Discipline
+//	04: Happyness
+
+//Page 10-11: STANDING
+//Page 12-13: ON ALL FOURS
+//Page 14-15: SLEEPING
+
+//Page F0: Sound effects
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -338,13 +363,22 @@ void drawlcd(uint8_t x, uint8_t y, uint8_t s, uint8_t e) {
 	uint8_t b;
 
 	lcdxy(x,y);
-	for (b=s;b<e;b++) {
+	for (b=s;b<e+s;b++) {
 		txlcd(eebuf[b]);
 	}
 }
 
+void drawfur(uint8_t frame) {
+	exee_read_buf(frame);
+	drawlcd(26,1,0,32);
+	drawlcd(26,2,32,32);
+	exee_read_buf(frame+1);
+	drawlcd(26,3,0,32);
+	drawlcd(26,4,32,32);
+}
+
 int main(void) {
-	uint8_t c,b,bc;
+	uint8_t c,b,bc,anim;
 
 	WDTCSR |= (1<<WDCE) | (1<<WDE);
 	WDTCSR = 0x00;
@@ -368,7 +402,7 @@ int main(void) {
 	_delay_ms(50);
 
 	txlcd(0x21);
-	txlcd(0xAC);
+	txlcd(0xAE);
 	txlcd(0x14);
 	txlcd(0x20);
 	txlcd(0x0C);
@@ -383,43 +417,44 @@ int main(void) {
 	// Draw icons
 	exee_read_buf(0);
 	drawlcd(0+7,0,0,9);
-	drawlcd(15+7,0,9,18);
-	drawlcd(30+7,0,18,27);
-	drawlcd(45+7,0,27,36);
-	drawlcd(60+7,0,36,45);
-	drawlcd(0+7,5,45,54);
-	drawlcd(15+7,5,54,63);
+	drawlcd(15+7,0,9,9);
+	drawlcd(30+7,0,18,9);
+	drawlcd(45+7,0,27,9);
+	drawlcd(60+7,0,36,9);
+	drawlcd(0+7,5,45,9);
+	drawlcd(15+7,5,54,9);
 	exee_read_buf(1);
 	drawlcd(30+7,5,0,9);
-	drawlcd(45+7,5,9,18);
-	drawlcd(60+7,5,18,27);
+	drawlcd(45+7,5,9,9);
+	//drawlcd(60+7,5,18,9);
 
+	//lcdxy(20,3);
+	//lcdtxt("0123456789");
 
-	lcdxy(20,3);
-	lcdtxt("0123456789");
+	drawfur(0x10);
 
 	sei();
 
 	for(;;) {
 		b = get_adc();
+
 		//sprintf(mbuf,"ADC0:%u   ",b);
 		//lcdtxt(mbuf);
+
+		anim++;
 		_delay_ms(200);
 
+		if (state == SLEEP) {
+			exee_read_buf(1);
+			drawlcd(22,2,18+((anim&2)>>1)*9,9);
+		}
+
 		if (((state == SLEEP) || (state == FA)) && (b > 100)) {
-			PORTA &= ~0b00001000;
-			txlcd(0x41);
-			txlcd(0x80);
-			PORTA |= 0b00001000;
-			lcdtxt("AWAKE   ");
+			drawfur(0x10);
 			state = AWAKE;
 		}
 		if ((state == AWAKE) && (b < 80)) {
-			PORTA &= ~0b00001000;
-			txlcd(0x41);
-			txlcd(0x80);
-			PORTA |= 0b00001000;
-			lcdtxt("SLEEP ?");
+			drawfur(0x12);
 			fatimer = 10;
 			state = FA;
 		}
@@ -427,11 +462,7 @@ int main(void) {
 			if (fatimer)
 				fatimer--;
 			else {
-				PORTA &= ~0b00001000;
-				txlcd(0x41);
-				txlcd(0x80);
-				PORTA |= 0b00001000;
-				lcdtxt("SLEEPING");
+				drawfur(0x14);
 				state = SLEEP;
 			}
 		}
