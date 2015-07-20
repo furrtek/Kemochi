@@ -37,7 +37,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Objects that must be built in order to link
-OBJECTS = tamagotchi.o 
+OBJECTS = tamagotchi.o lcd.o exee.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -47,6 +47,12 @@ all: $(TARGET) tamagotchi.hex tamagotchi.eep tamagotchi.lss size
 
 ## Compile
 tamagotchi.o: ../tamagotchi.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+lcd.o: ../lcd.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+exee.o: ../exee.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link

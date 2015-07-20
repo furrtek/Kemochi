@@ -38,6 +38,16 @@
 //Page 10-11: STANDING
 //Page 12-13: ON ALL FOURS
 //Page 14-15: SLEEPING
+//Page 16-17: WCA
+//Page 18-19: WCB
+//Page 1A-1B: EATA
+//Page 1C-1D: EATB
+
+#define P_STANDING	0x10
+#define P_FOURS		0x12
+#define P_SLEEPING	0x14
+#define P_WC		0x16
+#define P_EAT		0x1A
 
 //Page F0: Sound effects
 
@@ -49,6 +59,8 @@
 #include <util/delay.h>
 #include <inttypes.h>
 #include <avr/pgmspace.h>
+#include "lcd.h"
+#include "exee.h"
 
 #define AWAKE 0
 #define SLEEP 1
@@ -70,37 +82,84 @@ uint8_t i2c_write(uint8_t byte);
 uint8_t i2c_read();
 
 uint8_t volatile rbit, rs, first, bufidx, state, fatimer;
-
+uint16_t volatile stat_sleepy = 0;
+uint16_t volatile xpos = 26, xdir;
+uint8_t volatile icon_sel = 0;
 uint8_t volatile buf[32];
 
-void txlcd(uint8_t b) {
-	uint8_t c;
+void refresh_icons() {
+	uint8_t v;
+	// Draw icons
+	exee_read_buf(0);
+	if (icon_sel == 0) v = 0xFF; else v = 0;
+	drawlcd(0+7,0,0,9,v,0);
+	if (icon_sel == 1) v = 0xFF; else v = 0;
+	drawlcd(15+7,0,9,9,v,0);
+	if (icon_sel == 2) v = 0xFF; else v = 0;
+	drawlcd(30+7,0,18,9,v,0);
+	if (icon_sel == 3) v = 0xFF; else v = 0;
+	drawlcd(45+7,0,27,9,v,0);
+	if (icon_sel == 4) v = 0xFF; else v = 0;
+	drawlcd(60+7,0,36,9,v,0);
+	if (icon_sel == 5) v = 0xFF; else v = 0;
+	drawlcd(0+7,5,45,9,v,0);
+	if (icon_sel == 6) v = 0xFF; else v = 0;
+	drawlcd(15+7,5,54,9,v,0);
+	exee_read_buf(1);
+	if (icon_sel == 7) v = 0xFF; else v = 0;
+	drawlcd(30+7,5,0,9,v,0);
+	if (icon_sel == 8) v = 0xFF; else v = 0;
+	drawlcd(45+7,5,9,9,v,0);
+	if (icon_sel == 9) v = 0xFF; else v = 0;
+	drawlcd(60+7,5,18,9,v,0);
+}
 
-	PORTA &= ~_BV(PA2);
-	_delay_us(2);
-	for (c=0;c<8;c++) {
-		if ((b<<c)&0x80)
-			PORTA |= _BV(PA5);
+void selbeep() {
+	uint8_t c;
+	PCMSK1 = 0b00000010;
+	DDRB |= 1;
+	for (c=0;c<64;c++) {
+		PORTB ^= 1;
+		_delay_us(400);
+	}
+	DDRB &= ~1;
+	PORTB |= 1;
+}
+
+void valbeep() {
+	uint8_t c;
+	PCMSK1 = 0b00000010;
+	DDRB |= 1;
+	for (c=0;c<64;c++) {
+		PORTB ^= 1;
+		_delay_us(200);
+	}
+	DDRB &= ~1;
+	PORTB |= 1;
+}
+
+ISR(PCINT0_vect) {
+	_delay_ms(5);
+	if (!(PINA & _BV(PA1))) {
+		valbeep();
+	}
+	if (!(PINB & _BV(PB0))) {
+		if (icon_sel == 9)
+			icon_sel = 0;
 		else
-			PORTA &= ~_BV(PA5);
-		_delay_us(2);
-		PORTA |= _BV(PA4);
-		_delay_us(2);
-		PORTA &= ~_BV(PA4);
+			icon_sel++;
+		refresh_icons();
+		selbeep();
 	}
-	_delay_us(2);
-	PORTA |= _BV(PA2);
-	_delay_us(2);
+	if (!(PINB & _BV(PB1))) {
+		valbeep();
+	}
+	_delay_ms(15);
+	PCMSK1 = 0b00000011;
+	GIFR = 0;
 }
 
-void clrlcd() {
-	uint8_t c;
-	PORTA |= 0b00001000;
-	for (c=0;c<252;c++) {
-		txlcd(0);
-		txlcd(0);
-	}
-}
+ISR(PCINT1_vect, ISR_ALIASOF(PCINT0_vect));
 
 ISR(TIM1_OVF_vect) {
 	first = 1;
@@ -125,11 +184,16 @@ ISR(INT0_vect) {
 						cs += buf[3+c];
 					}
 					if (cs == buf[3+c]) {
+						//Beep
+						PCMSK1 =0b00000010;
+						DDRB |= 1;
 						for (c=0;c<32;c++) {
 							PORTB ^= 1;
 							_delay_us(200);
 						}
-						PORTB = 0;
+						DDRB &= ~1;
+						PORTB |= 1;
+						PCMSK1 =0b00000011;
 
 						if (buf[1] == 0) {
 							//clrlcd();
@@ -190,220 +254,37 @@ ISR(INT0_vect) {
 	}
 }
 
-#define SDA PA7
-#define SCL PA4
-
-void i2c_io_set_sda(uint8_t hi) {
-	if (hi) {
-		DDRA &= ~_BV(SDA);
-		PORTA &= ~_BV(SDA);
-	} else {
-		DDRA |= _BV(SDA);
-		PORTA &= ~_BV(SDA);
-	}
-}
-
-void i2c_io_set_scl(uint8_t hi) {
-	if (hi)
-		PORTA |= _BV(SCL);
-	else
-		PORTA &= ~_BV(SCL);
-}
-
-void i2c_start() {
-  	i2c_io_set_scl(1);
-	_delay_us(2);
-  	i2c_io_set_sda(0);
-	_delay_us(2);
-  	i2c_io_set_scl(0);
-	_delay_us(10);
-}
-
-void i2c_stop() {
-	_delay_us(2);
-  	i2c_io_set_scl(0);
-	_delay_us(2);
-  	i2c_io_set_sda(0);
-	_delay_us(2);
-  	i2c_io_set_scl(1);
-	_delay_us(2);
-  	i2c_io_set_sda(1);
-}
-
-uint8_t i2c_write(uint8_t byte) {
-	uint8_t ack, bit;
-
-	for (bit=0;bit<8;bit++) {
-		if (((byte<<bit) & 0x80) == 0x80)
-			i2c_io_set_sda(1);
-		else
-			i2c_io_set_sda(0);
-		_delay_us(2);
-  		i2c_io_set_scl(1);
-		_delay_us(2);
-  		i2c_io_set_scl(0);
-	}
-	i2c_io_set_sda(1);
-	_delay_us(5);
-
-  	i2c_io_set_scl(1);
-	_delay_us(2);
-	ack = (PINA & SDA)>>SDA;
-	_delay_us(2);
-  	i2c_io_set_scl(0);
-	_delay_us(2);
-	return ack;
-}
-
-uint8_t i2c_read() {
-	uint8_t byte = 0x00, bit;
-	for (bit=0;bit<8;bit++) {
-  		i2c_io_set_sda(1);
-    	i2c_io_set_scl(0);
-		_delay_us(2);
-    	i2c_io_set_scl(1);
-		_delay_us(2);
-		byte <<= 1;
-    	if (PINA & _BV(SDA)) byte |= 1;
-		_delay_us(1);
-    	i2c_io_set_scl(0);
-	}
-	return byte;
-}
-
-void i2c_readack() {
-   	i2c_io_set_scl(0);
-	_delay_us(2);
-  	i2c_io_set_sda(0);
-	_delay_us(2);
-   	i2c_io_set_scl(1);
-	_delay_us(2);
-   	i2c_io_set_scl(0);
-	_delay_us(2);
-  	i2c_io_set_sda(1);
-	_delay_us(2);
-}
-
-void i2c_noreadack() {
-   	i2c_io_set_scl(0);
-	_delay_us(2);
-  	i2c_io_set_sda(1);
-	_delay_us(2);
-   	i2c_io_set_scl(1);
-	_delay_us(2);
-   	i2c_io_set_scl(0);
-	_delay_us(5);
-}
-
-uint8_t exee_read_byte(uint16_t addr) {
-	uint8_t v;
-	i2c_start();
-	i2c_write(0xA0);
-	i2c_write(addr>>8);
-	i2c_write(addr & 0xFF);
-	i2c_start();
-	i2c_write(0xA1);
-	v = i2c_read();
-	i2c_noreadack();
-	return v;
-}
-
-uint8_t eebuf[64];
-
-void exee_read_buf(uint16_t addr) {
-	uint8_t c;
-
-	addr *= 64;
-	i2c_start();
-	i2c_write(0xA0);
-	i2c_write(addr>>8);
-	i2c_write(addr & 0xFF);
-	i2c_start();
-	i2c_write(0xA1);
-	for (c=0;c<64;c++) {
-		eebuf[c] = i2c_read();
-		if (c == 63)
-			i2c_noreadack();
-		else
-			i2c_readack();
-	}
-}
-
-void lcdtxt(char *txt) {
-	uint8_t tc,cv;
-	while (*txt) {
-		cv = (*txt);
-		if (cv == 32) {
-			for (tc=0;tc<5;tc++)
-				txlcd(0);
-		} else {
-			if (cv == 33) {
-				cv = 11*5;
-			} else if (cv == 63) {
-				cv = 12*5;
-			} else {
-				cv = (cv-0x30)*5;
-			}
-			for (tc=0;tc<5;tc++)
-				txlcd(exee_read_byte(128+cv+tc));
-		}
-		txlcd(0);
-		txt++;
-	}
-}
-
-void lcdxy(uint8_t x, uint8_t y) {
-	PORTA &= ~0b00001000;
-	txlcd(0x80+x);
-	txlcd(0x40+y);
-	PORTA |= 0b00001000;
-}
-
-void drawlcd(uint8_t x, uint8_t y, uint8_t s, uint8_t e) {
-	uint8_t b;
-
-	lcdxy(x,y);
-	for (b=s;b<e+s;b++) {
-		txlcd(eebuf[b]);
-	}
-}
-
-void drawfur(uint8_t frame) {
-	exee_read_buf(frame);
-	drawlcd(26,1,0,32);
-	drawlcd(26,2,32,32);
-	exee_read_buf(frame+1);
-	drawlcd(26,3,0,32);
-	drawlcd(26,4,32,32);
-}
-
 int main(void) {
-	uint8_t c,b,bc,anim;
+	uint8_t c, b, bc, anim = 0;
 
 	WDTCSR |= (1<<WDCE) | (1<<WDE);
 	WDTCSR = 0x00;
 
 	DDRA = 0b01111100;
-	DDRB = 0b00000001;
+	DDRB = 0b00000000;
+	PORTA = 2;
+	PORTB = 3;
 
 	MCUCR = 0b00000010;
-	GIMSK = 0b01000000;
+	GIMSK = 0b01110000;
+	PCMSK1 =0b00000011;
+	PCMSK0 =0b00000010;
 
 	TCCR1A = 0b00000000;
 	TCCR1B = 0b00000001;
 	TIMSK1 = 0b00000001;
 
 	//Reset LCD
-	PORTA = 0b11000100;
+	PORTA = 0b11000110;
 	_delay_ms(50);
-	PORTA = 0b10000100;
+	PORTA = 0b10000110;
 	_delay_ms(10);
-	PORTA = 0b11000100;
+	PORTA = 0b11000110;
 	_delay_ms(50);
 
 	txlcd(0x21);
 	txlcd(0xAE);
-	txlcd(0x14);
+	txlcd(0x13);
 	txlcd(0x20);
 	txlcd(0x0C);
 
@@ -414,24 +295,12 @@ int main(void) {
 	ADCSRB = 0b00010000;
 	DIDR0 = 0b00000001;
 
-	// Draw icons
-	exee_read_buf(0);
-	drawlcd(0+7,0,0,9);
-	drawlcd(15+7,0,9,9);
-	drawlcd(30+7,0,18,9);
-	drawlcd(45+7,0,27,9);
-	drawlcd(60+7,0,36,9);
-	drawlcd(0+7,5,45,9);
-	drawlcd(15+7,5,54,9);
-	exee_read_buf(1);
-	drawlcd(30+7,5,0,9);
-	drawlcd(45+7,5,9,9);
-	//drawlcd(60+7,5,18,9);
+	refresh_icons();
 
 	//lcdxy(20,3);
 	//lcdtxt("0123456789");
 
-	drawfur(0x10);
+	drawfur(P_STANDING,0);
 
 	sei();
 
@@ -441,31 +310,78 @@ int main(void) {
 		//sprintf(mbuf,"ADC0:%u   ",b);
 		//lcdtxt(mbuf);
 
-		anim++;
-		_delay_ms(200);
+		//Fall asleep: return to center of screen (xpos=26)
+		//Then all4s
+		//Then sleeping
+		//Don't fuck around with Zz icon's position...
 
 		if (state == SLEEP) {
-			exee_read_buf(1);
-			drawlcd(22,2,18+((anim&2)>>1)*9,9);
+			if (anim & 1) {
+				exee_read_buf(1);
+				if (xpos >= 10)
+					drawlcd(xpos-10,2,18+((anim&2)>>1)*9,9,0,0);
+				else
+					drawlcd(xpos+32+1,2,18+((anim&2)>>1)*9,9,0,0);
+			}
+			if (stat_sleepy) stat_sleepy--;
+		}
+
+		if (state == AWAKE) {
+			if ((anim & 3) == 0) drawfur(P_STANDING,xdir);
+			if ((anim & 3) == 1) drawfur(P_WC,xdir);
+			if ((anim & 3) == 2) drawfur(P_STANDING,xdir);
+			if ((anim & 3) == 3) drawfur(P_WC+2,xdir);
+			if (!xdir) {
+				if (xpos) {
+					xpos-=2;
+				} else {
+					xdir = 1;
+				}
+			} else {
+				if (xpos < 51) {
+					xpos+=2;
+				} else {
+					xdir = 0;
+				}
+			}
 		}
 
 		if (((state == SLEEP) || (state == FA)) && (b > 100)) {
-			drawfur(0x10);
+			lcdxy(22,2);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			txlcd(0);
+			drawfur(P_STANDING,xdir);
 			state = AWAKE;
+			valbeep();
+			_delay_ms(80);
+			valbeep();
+			_delay_ms(80);
 		}
 		if ((state == AWAKE) && (b < 80)) {
-			drawfur(0x12);
+			drawfur(P_FOURS,xdir);
 			fatimer = 10;
 			state = FA;
+			valbeep();
 		}
 		if (state == FA) {
 			if (fatimer)
 				fatimer--;
 			else {
-				drawfur(0x14);
+				drawfur(P_SLEEPING,xdir);
+				selbeep();
 				state = SLEEP;
 			}
 		}
+
+		anim++;
+		_delay_ms(200);
 	}
 
     return 0;
