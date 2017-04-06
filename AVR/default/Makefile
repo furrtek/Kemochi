@@ -5,7 +5,7 @@
 ## General Flags
 PROJECT = tamagochi
 MCU = attiny44
-TARGET = tamagotchi.elf
+TARGET = kemochi.elf
 CC = avr-gcc
 
 CPP = avr-g++
@@ -15,7 +15,7 @@ COMMON = -mmcu=$(MCU)
 
 ## Compile options common for all C compilation units.
 CFLAGS = $(COMMON)
-CFLAGS += -Wall -gdwarf-2 -std=gnu99     -DF_CPU=1000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -Wall -gdwarf-2 -std=gnu99       -DF_CPU=1000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d 
 
 ## Assembly specific flags
@@ -25,7 +25,7 @@ ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 
 ## Linker flags
 LDFLAGS = $(COMMON)
-LDFLAGS +=  -Wl,-Map=tamagotchi.map
+LDFLAGS +=  -Wl,-Map=kemochi.map
 
 
 ## Intel Hex file production flags
@@ -37,22 +37,31 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Objects that must be built in order to link
-OBJECTS = tamagotchi.o lcd.o exee.o 
+OBJECTS = lcd.o exee.o main.o i2c.o sound.o ir.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
 
 ## Build
-all: $(TARGET) tamagotchi.hex tamagotchi.eep tamagotchi.lss size
+all: $(TARGET) kemochi.hex kemochi.eep kemochi.lss size
 
 ## Compile
-tamagotchi.o: ../tamagotchi.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
 lcd.o: ../lcd.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 exee.o: ../exee.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+main.o: ../main.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+i2c.o: ../i2c.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+sound.o: ../sound.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+ir.o: ../ir.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
@@ -75,7 +84,7 @@ size: ${TARGET}
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) tamagotchi.elf dep/* tamagotchi.hex tamagotchi.eep tamagotchi.lss tamagotchi.map
+	-rm -rf $(OBJECTS) kemochi.elf dep/* kemochi.hex kemochi.eep kemochi.lss kemochi.map
 
 
 ## Other dependencies
