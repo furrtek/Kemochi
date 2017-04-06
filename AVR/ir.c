@@ -4,6 +4,59 @@
 #include "lcd.h"
 #include "ir.h"
 
+// IR frame format:
+// 10110001 sccccccc 000lllll d... kkkkkkkk
+// 10110001 = 0xB1 = magic byte
+// s = source (0=programmer, 1=other kemochi)
+// c = command
+// l = length - 1 (max 31)
+// k = checksum (start=0xAA)
+
+void ir_pulse() {
+	uint8_t c;
+
+	// Shitty ~38kHz software generator
+	// Todo: put IR LED on OC0B (ADC + 38kHz gen) ?
+	for (c = 0; c < 20; c++) {
+		PORTA ^= _BV(IR_LED);
+		_delay_us(13);
+	}
+}
+
+void ir_send_byte(uint8_t byte) {
+	uint8_t c, w;
+
+	for (c = 0; c < 4; c++) {
+		ir_pulse();
+		for (w = 0; w < (byte & 3); w++)
+			_delay_ms(4);
+		byte >>= 2;
+	}
+}
+
+void ir_frame(uint8_t cmd, uint8_t * data, uint8_t len) {
+	uint8_t c, checksum;
+
+	checksum = 0xAA + len + cmd;
+	for (c = 0; c < len; c++)
+		checksum += data[c];
+
+	ir_send_byte(IR_MAGIC);
+	ir_send_byte(cmd);
+	ir_send_byte(len);
+	for (c = 0; c < len; c++)
+		ir_send_byte(data[c]);
+	ir_send_byte(checksum);
+	ir_pulse();		// Last pulse
+}
+
+void ir_send_specid() {
+	player_info_A * p_info = (player_info_A*)exee_buf;
+
+	exee_read_page(EEP_PINFO_A);
+	ir_frame(IR_CMD_SPECID, (uint8_t*)&p_info->name[0], 12);
+}
+
 void ir_decode() {
 	uint8_t c, checksum, cmd, len;
 	player_info_A * p_info = (player_info_A*)exee_buf;

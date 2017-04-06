@@ -18,7 +18,6 @@
 #define I2C_SCL	PA4
 
 // IR stuff
-#define IR_MAGIC 0xB1
 
 #define IR_RX_IDLE 0
 #define IR_RX_RECV 1

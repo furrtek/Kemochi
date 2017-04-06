@@ -1,11 +1,6 @@
-// Kemochi - furrtek 2015
-
-// IR packet:
-// 10110001 sccccccc 000lllll d... kkkkkkkk
-// s = source (0=programmer, 1=other kemochi)
-// c = command
-// l = length
-// k = checksum (start=0xAA)
+// Kemochi fw 0.1
+// furrtek 2015~2017
+// ATTiny44 1MHz RC
 
 // Todo: Use an LCD line with LCD /CE not asserted for buzzer, not a button line !
 
