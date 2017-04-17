@@ -24,17 +24,15 @@ uint8_t exee_read_byte(uint16_t addr) {
 void exee_read_page(uint16_t page) {
 	uint8_t c;
 
-	exee_set_address(page * 64);
+	exee_set_address(page << 6);
 	i2c_start();
 	i2c_write(EE_READ);
 
-	for (c = 0; c < 64; c++) {
+	for (c = 0; c < 63; c++) {
 		exee_buf[c] = i2c_read();
-		if (c == 63)
-			i2c_noreadack();
-		else
-			i2c_readack();
+		i2c_readack();
 	}
+	i2c_noreadack();
 
 	exee_last_page = page;
 }

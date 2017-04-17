@@ -24,3 +24,5 @@
 #define IR_RX_DECODE 2
 
 uint8_t volatile ir_rx_buf[32];
+
+extern uint8_t volatile icon_sel, prev_icon;

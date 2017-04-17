@@ -106,13 +106,13 @@ void ir_decode() {
 		
 		if (c == 12) {
 			// Same !
-			lcd_clear();
+			lcd_clear(0, 6);
 
 			lcd_xy(6, 2);
 			lcd_txt("HEY! ANOTHER", 16);
 		} else {
 			// Different
-			lcd_clear();
+			lcd_clear(0, 6);
 
 			lcd_xy(6, 2);
 			lcd_txt("RMT IS A", 16);

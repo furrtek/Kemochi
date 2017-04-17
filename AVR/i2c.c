@@ -2,13 +2,12 @@
 #include "i2c.h"
 
 void i2c_set_sda(uint8_t v) {
-	if (v) {
+	if (v)
 		DDRA &= ~_BV(I2C_SDA);
-		PORTA &= ~_BV(I2C_SDA);
-	} else {
+	else
 		DDRA |= _BV(I2C_SDA);
-		PORTA &= ~_BV(I2C_SDA);
-	}
+
+	PORTA &= ~_BV(I2C_SDA);
 }
 
 void i2c_set_scl(uint8_t v) {
@@ -56,7 +55,7 @@ uint8_t i2c_write(uint8_t byte) {
 
   	i2c_set_scl(1);
 	_delay_us(2);
-	ack = (PINA & I2C_SDA) >> I2C_SDA;
+	ack = PINA & I2C_SDA; // >> I2C_SDA;
 	_delay_us(2);
   	i2c_set_scl(0);
 	_delay_us(2);
@@ -67,19 +66,21 @@ uint8_t i2c_write(uint8_t byte) {
 uint8_t i2c_read() {
 	uint8_t byte = 0x00, bit;
 
+  	i2c_set_sda(1);
+
 	for (bit = 0; bit < 8; bit++) {
-  		i2c_set_sda(1);
     	i2c_set_scl(0);
 		_delay_us(2);
     	i2c_set_scl(1);
 		_delay_us(2);
 
 		byte <<= 1;
-    	if (PINA & _BV(I2C_SDA)) byte |= 1;
-
-		_delay_us(1);
-    	i2c_set_scl(0);
+    	if (PINA & _BV(I2C_SDA))
+			byte |= 1;
 	}
+
+	_delay_us(1);
+    i2c_set_scl(0);
 
 	return byte;
 }
